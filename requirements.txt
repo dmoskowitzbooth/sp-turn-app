@@ -1,2 +1,9 @@
 Flask
 Gunicorn
+dash
+dash-bootstrap-components
+plotly
+pandas
+pulp
+xlsxwriter
+openpyxl
