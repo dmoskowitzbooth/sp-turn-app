@@ -12,6 +12,7 @@ import base64
 import io
 import uuid
 import dash
+import os
 
 def clean_time_string(time_str):
     # Ensure the input is treated as a string
