@@ -4,4 +4,4 @@ xlsxwriter
 plotly
 dash
 dash-bootstrap-components
-
+gunicorn
