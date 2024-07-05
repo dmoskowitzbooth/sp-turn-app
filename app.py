@@ -57,7 +57,8 @@ def minutes_to_datetime(minutes):
 
 # Initialize the Dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-app.title="Train Schedule Optimizer"
+app.title = "Train Schedule Optimizer"
+application = app.server  # This exposes the Flask server as `application`
 
 # Layout
 app.layout = dbc.Container([
