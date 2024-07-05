@@ -1,11 +1,7 @@
 pandas
-gunicorn
-datetime
-re
 pulp
 xlsxwriter
 plotly
 dash
 dash-bootstrap-components
-openpyxl  # to ensure compatibility with xlsx files
 
