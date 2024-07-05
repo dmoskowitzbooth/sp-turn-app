@@ -1,10 +1,10 @@
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time as dt_time
 import re
 from pulp import *
 import xlsxwriter
 import plotly.express as px
-from dash import Dash, dcc, html, Input, Output, State
+from dash import Dash, dcc, html, Input, Output, State, callback_context
 from dash.dependencies import ALL
 import dash_bootstrap_components as dbc
 import json
@@ -14,8 +14,25 @@ import uuid
 import dash
 
 def clean_time_string(time_str):
+    # Ensure the input is treated as a string
+    if isinstance(time_str, dt_time):
+        time_str = time_str.strftime('%I:%M %p')
+    elif isinstance(time_str, datetime):
+        time_str = time_str.strftime('%I:%M %p')
+    else:
+        time_str = str(time_str)
+
+    # Attempt to parse the time string in various expected formats
+    for fmt in ['%I:%M:%S %p', '%I:%M %p', '%I:%M%p', '%I:%M:%S%p']:
+        try:
+            return datetime.strptime(time_str, fmt).strftime('%I:%M%p')
+        except ValueError:
+            pass
+
+    # Handle the '5:00A' format
     cleaned_time_str = re.sub(r'^[^\d]*', '', time_str)
     cleaned_time_str = re.sub(r'(\d+:\d+)([AP])$', r'\1\2M', cleaned_time_str)
+
     return cleaned_time_str
 
 def convert_to_minutes_since_midnight(time_str):
@@ -39,12 +56,29 @@ def minutes_to_datetime(minutes):
 
 # Initialize the Dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app.title="Train Schedule Optimizer"
 
 # Layout
 app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
             html.H1("Train Schedule Optimizer"),
+            html.Div([
+                html.H3("Instructions:"),
+                html.Ol([
+                    html.Li([
+                        "Download the ", 
+                        html.A("template file", href="#", id="download-template-link"),
+                        "."
+                    ]),
+                    html.Li("Detailed instructions and troubleshooting steps can be found in the 'Instructions' sheet of this document."),
+                    html.Li("Fill in the 'turn' sheet's fields for train numbers (highlighted in green), stations (under the station header), and times. Times can be input as hh:mm in 24-hour format (e.g. 15:00) or hh:mm A/P in 12-hour format (e.g. 3:00 P). They will auto-format to the necessary formatting so long as they're input in one of these formats."),
+                    html.Li("Once you've filled in the excel document, save it as an Excel Workbook (.xlsx) file (the name doesn't matter as long as it's the correct filed type). Upload it to the app. "),
+                    html.Li("Input the number of sets and default minimum turn time. If you need to set turn times for specific stations, you can do so after this by selecting a station from the dropdown and inputting the turn time for that station only."),
+                    html.Li("The app will run the optimizer to determine the best solution given the parameters. This may take up to 60 seconds depending on how large the dataset is. You can check the status by looking at the title of the tab in the browser."),
+                    html.Li("Once complete, the chart will provide a visual of the solution. If there are overlapping trains, this means there is not a viable solution with the parameters you entered (see the troubleshooting part of the 'Instructions' sheet in the template). You can download an excel file with the detailed results."),
+                ])
+            ]),
             dcc.Upload(
                 id='upload-data',
                 children=html.Div([
@@ -78,10 +112,26 @@ app.layout = dbc.Container([
             dcc.Store(id='schedule-data'),
             dcc.Store(id='turntime-overrides-store', data=[]),  # Store to keep track of overrides
             html.Button('Download Excel', id='download-button', n_clicks=0),
-            dcc.Download(id='download-data')
+            dcc.Download(id='download-data'),
+            dcc.Download(id='download-template')  # Add hidden download component
         ])
     ])
 ])
+
+@app.callback(
+    Output('download-template', 'data'),
+    [Input('download-template-link', 'n_clicks')],
+    prevent_initial_call=True
+)
+def download_template_link(n_clicks):
+    # Path to your template file
+    template_path = 'template.xltx'
+    
+    # Read the template file
+    with open(template_path, 'rb') as f:
+        data = f.read()
+    
+    return dcc.send_bytes(data, 'template.xltx')
 
 @app.callback(
     Output('upload-text', 'children'),
