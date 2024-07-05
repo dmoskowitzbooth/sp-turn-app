@@ -1,4 +1,5 @@
 pandas
+gunicorn
 datetime
 re
 pulp
