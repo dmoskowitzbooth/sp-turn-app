@@ -1,6 +1,7 @@
 pandas
 pulp
 xlsxwriter
+openpyxl
 plotly
 dash
 dash-bootstrap-components
