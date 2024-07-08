@@ -356,10 +356,10 @@ def update_gantt_chart(data):
 
     # Extract numeric part of 'Resource' for sorting
     df['Resource_numeric'] = df['Resource'].str.extract(r'(\d+)$').astype(int)  # Extract numeric part and convert to int
-    df = df.sort_values(by='Resource_numeric')  # Sort by numeric part of 'Resource' column
+    df = df.sort_values(by='Resource_numeric')  # Corrected line
 
     # Define category order based on sorted numeric values
-    category_order = df.sort_values(by 'Resource_numeric')['Resource'].unique()
+    category_order = df.sort_values(by='Resource_numeric')['Resource'].unique()
 
     fig = px.timeline(df, x_start='Start', x_end='Finish', y='Resource', color='Station', text='Label', 
                       category_orders={'Resource': category_order})
