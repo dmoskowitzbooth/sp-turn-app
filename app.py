@@ -344,6 +344,20 @@ def update_gantt_chart(data):
         return px.timeline()
 
     df = pd.DataFrame(data)
+    
+    # Ensure required columns are present
+    required_columns = ['Start', 'Finish', 'Resource', 'Station', 'Label']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
+
+    # Convert to datetime if necessary
+    if not pd.api.types.is_datetime64_any_dtype(df['Start']):
+        df['Start'] = pd.to_datetime(df['Start'])
+    if not pd.api.types.is_datetime64_any_dtype(df['Finish']):
+        df['Finish'] = pd.to_datetime(df['Finish'])
+
+    # Extract numeric part of 'Resource' for sorting
     df['Resource_numeric'] = df['Resource'].str.extract(r'(\d+)$').astype(int)  # Extract numeric part and convert to int
     df = df.sort_values(by='Resource_numeric')  # Sort by numeric part of 'Resource' column
 
