@@ -137,29 +137,16 @@ def download_template_link(n_clicks):
 
 # Callback to parse the uploaded file and process the data
 @app.callback(
-    Output('upload-text', 'children'),
+    [Output('upload-text', 'children'),
+     Output('station-dropdown', 'options')],
     [Input('upload-data', 'contents')],
-    [State('upload-data', 'filename')]
+    [State('upload-data', 'filename'),
+     State('upload-data', 'last_modified')]
 )
-def update_upload_box(contents, filename):
+def handle_file_upload(contents, filename, last_modified):
     print(f"Received contents: {contents}")  # Debug print
-    if contents is not None:
-        return html.Div([
-            'File uploaded: ',
-            html.Span(filename, style={'fontWeight': 'bold'})
-        ])
-    return 'Drag and Drop or Select Files'
-
-@app.callback(
-    Output('station-dropdown', 'options'),
-    Input('upload-data', 'contents'),
-    State('upload-data', 'filename'),
-    State('upload-data', 'last_modified')
-)
-def update_station_dropdown(contents, filename, last_modified):
-    print(f"Updating station dropdown with contents: {contents}")  # Debug print
     if contents is None:
-        return []
+        return 'Drag and Drop or Select Files', []
 
     try:
         content_type, content_string = contents.split(',')
@@ -184,10 +171,14 @@ def update_station_dropdown(contents, filename, last_modified):
 
         # Create dropdown options
         station_options = [{'label': station, 'value': station} for station in sorted(stations)]
-        return station_options
+        upload_message = html.Div([
+            'File uploaded: ',
+            html.Span(filename, style={'fontWeight': 'bold'})
+        ])
+        return upload_message, station_options
     except Exception as e:
         print(f"Error processing file: {e}")  # Debug print
-        return []
+        return 'Drag and Drop or Select Files', []
 
 @app.callback(
     Output('turntime-overrides-store', 'data'),
@@ -345,10 +336,6 @@ def update_output(contents, minturntime, sets, n_clicks, filename, last_modified
     Output('gantt-chart', 'figure'),
     [Input('schedule-data', 'data')]
 )
-@app.callback(
-    Output('gantt-chart', 'figure'),
-    [Input('schedule-data', 'data')]
-)
 def update_gantt_chart(data):
     if not data:
         return px.timeline()
@@ -369,10 +356,10 @@ def update_gantt_chart(data):
 
     # Extract numeric part of 'Resource' for sorting
     df['Resource_numeric'] = df['Resource'].str.extract(r'(\d+)$').astype(int)  # Extract numeric part and convert to int
-    df = df.sort_values(by='Resource_numeric')  # Sort by numeric part of 'Resource' column
+    df = df.sort_values(by 'Resource_numeric')  # Sort by numeric part of 'Resource' column
 
     # Define category order based on sorted numeric values
-    category_order = df.sort_values(by='Resource_numeric')['Resource'].unique()
+    category_order = df.sort_values(by 'Resource_numeric')['Resource'].unique()
 
     fig = px.timeline(df, x_start='Start', x_end='Finish', y='Resource', color='Station', text='Label', 
                       category_orders={'Resource': category_order})
@@ -380,7 +367,7 @@ def update_gantt_chart(data):
     fig.update_xaxes(title='Time')
     fig.update_traces(textposition='inside', textfont_size=12)
     return fig
-
+    
 # Callback to generate and download the Excel file
 @app.callback(
     Output('download-data', 'data'),
