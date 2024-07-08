@@ -339,6 +339,10 @@ def update_output(contents, minturntime, sets, n_clicks, filename, last_modified
     Output('gantt-chart', 'figure'),
     [Input('schedule-data', 'data')]
 )
+@app.callback(
+    Output('gantt-chart', 'figure'),
+    [Input('schedule-data', 'data')]
+)
 def update_gantt_chart(data):
     if not data:
         return px.timeline()
