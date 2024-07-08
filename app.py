@@ -135,19 +135,6 @@ def download_template_link(n_clicks):
     
     return dcc.send_bytes(data, 'template.xltx')
 
-@app.callback(
-    Output('upload-text', 'children'),
-    [Input('upload-data', 'contents')],
-    [State('upload-data', 'filename')]
-)
-def update_upload_box(contents, filename):
-    if contents is not None:
-        return html.Div([
-            'File uploaded: ',
-            html.Span(filename, style={'fontWeight': 'bold'})
-        ])
-    return 'Drag and Drop or Select Files'
-
 # Callback to parse the uploaded file and process the data
 @app.callback(
     Output('upload-text', 'children'),
