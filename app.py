@@ -150,38 +150,57 @@ def update_upload_box(contents, filename):
 
 # Callback to parse the uploaded file and process the data
 @app.callback(
+    Output('upload-text', 'children'),
+    [Input('upload-data', 'contents')],
+    [State('upload-data', 'filename')]
+)
+def update_upload_box(contents, filename):
+    print(f"Received contents: {contents}")  # Debug print
+    if contents is not None:
+        return html.Div([
+            'File uploaded: ',
+            html.Span(filename, style={'fontWeight': 'bold'})
+        ])
+    return 'Drag and Drop or Select Files'
+
+@app.callback(
     Output('station-dropdown', 'options'),
     Input('upload-data', 'contents'),
     State('upload-data', 'filename'),
     State('upload-data', 'last_modified')
 )
 def update_station_dropdown(contents, filename, last_modified):
+    print(f"Updating station dropdown with contents: {contents}")  # Debug print
     if contents is None:
         return []
 
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-    df = pd.read_excel(io.BytesIO(decoded), sheet_name='turn', header=None)
+    try:
+        content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        df = pd.read_excel(io.BytesIO(decoded), sheet_name='turn', header=None)
 
-    # Extract unique stations
-    table_start_indices = df.index[df.iloc[:, 0].str.contains('Station', na=False, case=False)].tolist()
-    table_start_indices.append(len(df))
-    stations = set()
-    for i in range(len(table_start_indices) - 1):
-        start_index = table_start_indices[i]
-        end_index = table_start_indices[i + 1]
-        table_df = df.iloc[start_index:end_index].reset_index(drop=True)
-        column_names = table_df.iloc[0]
-        table_df.columns = column_names
-        table_df = table_df.drop(0).reset_index(drop=True)
-        table_df = table_df.dropna(axis=1, how='all')
+        # Extract unique stations
+        table_start_indices = df.index[df.iloc[:, 0].str.contains('Station', na=False, case=False)].tolist()
+        table_start_indices.append(len(df))
+        stations = set()
+        for i in range(len(table_start_indices) - 1):
+            start_index = table_start_indices[i]
+            end_index = table_start_indices[i + 1]
+            table_df = df.iloc[start_index:end_index].reset_index(drop=True)
+            column_names = table_df.iloc[0]
+            table_df.columns = column_names
+            table_df = table_df.drop(0).reset_index(drop=True)
+            table_df = table_df.dropna(axis=1, how='all')
 
-        if 'Station' in table_df.columns:
-            stations.update(table_df['Station'].dropna().unique())
+            if 'Station' in table_df.columns:
+                stations.update(table_df['Station'].dropna().unique())
 
-    # Create dropdown options
-    station_options = [{'label': station, 'value': station} for station in sorted(stations)]
-    return station_options
+        # Create dropdown options
+        station_options = [{'label': station, 'value': station} for station in sorted(stations)]
+        return station_options
+    except Exception as e:
+        print(f"Error processing file: {e}")  # Debug print
+        return []
 
 @app.callback(
     Output('turntime-overrides-store', 'data'),
